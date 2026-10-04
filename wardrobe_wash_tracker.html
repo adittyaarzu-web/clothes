@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wardrobe Wash & Care Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Navigation Header -->
+    <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-gradient-to-tr from-brand-600 to-sky-400 rounded-2xl text-white shadow-md shadow-brand-500/20">
+                        <i class="fa-solid font-bold fa-soap text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white">Personal Wardrobe Care</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Wash, Laundry & Alteration Tracker</p>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="resetToDefaultData()" title="Reset to original list" class="px-3 py-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 text-xs font-semibold transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span class="hidden md:inline">Reset Inventory</span>
+                    </button>
+
+                    <button id="add-item-btn" onclick="openAddModal()" class="flex items-center space-x-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-md shadow-brand-600/20">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span class="hidden sm:inline">Add Clothing Item</span>
+                        <span class="sm:hidden">Add</span>
+                    </button>
+                    
+                    <button id="theme-toggle" onclick="toggleDarkMode()" class="p-2.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors">
+                        <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                        <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Analytics / Summary Cards -->
+        <section class="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+            <!-- Total Items Card -->
+            <div onclick="setFilterStatus('all')" class="cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all group">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Items</span>
+                    <div class="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-shirt"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-baseline justify-between">
+                    <span id="stat-total" class="text-2xl font-bold text-slate-900 dark:text-white">0</span>
+                    <span class="text-xs text-slate-400">items</span>
+                </div>
+            </div>
+
+            <!-- Needs Wash Card -->
+            <div onclick="setFilterStatus('needs_wash')" class="cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-2xl border border-rose-100 dark:border-rose-900/30 shadow-sm hover:shadow-md transition-all group">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-rose-500 dark:text-rose-400 uppercase tracking-wider">Needs Wash</span>
+                    <div class="p-2 bg-rose-50 dark:bg-rose-950/50 rounded-xl text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-baseline justify-between">
+                    <span id="stat-needs-wash" class="text-2xl font-bold text-rose-600 dark:text-rose-400">0</span>
+                    <span class="text-xs text-rose-400 dark:text-rose-500/80">dirty</span>
+                </div>
+            </div>
+
+            <!-- In Wash Card -->
+            <div onclick="setFilterStatus('in_wash')" class="cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-2xl border border-amber-100 dark:border-amber-900/30 shadow-sm hover:shadow-md transition-all group">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-amber-500 dark:text-amber-400 uppercase tracking-wider">In Wash</span>
+                    <div class="p-2 bg-amber-50 dark:bg-amber-950/50 rounded-xl text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-water-laundry fa-spin" style="--fa-animation-duration: 4s;"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-baseline justify-between">
+                    <span id="stat-in-wash" class="text-2xl font-bold text-amber-600 dark:text-amber-400">0</span>
+                    <span class="text-xs text-amber-500/80">in laundry</span>
+                </div>
+            </div>
+
+            <!-- Alteration Needed Card -->
+            <div onclick="setFilterStatus('alteration_needed')" class="cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-2xl border border-purple-100 dark:border-purple-900/30 shadow-sm hover:shadow-md transition-all group">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Alteration</span>
+                    <div class="p-2 bg-purple-50 dark:bg-purple-950/50 rounded-xl text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-scissors"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-baseline justify-between">
+                    <span id="stat-alteration" class="text-2xl font-bold text-purple-600 dark:text-purple-400">0</span>
+                    <span class="text-xs text-purple-400">tailor/repair</span>
+                </div>
+            </div>
+
+            <!-- Clean & Ready Card -->
+            <div onclick="setFilterStatus('clean')" class="cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 shadow-sm hover:shadow-md transition-all group col-span-2 md:col-span-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">Clean & Ready</span>
+                    <div class="p-2 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-sparkles"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-baseline justify-between">
+                    <span id="stat-clean" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">0</span>
+                    <span class="text-xs text-emerald-500/80">ready</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls & Filters Bar -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                
+                <!-- Search Input -->
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="search-input" oninput="renderItems()" placeholder="Search by name, notes, or tags (e.g. waist, Lacoste, Zara, embroidery)..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-100 placeholder-slate-400">
+                </div>
+
+                <!-- Status Tabs -->
+                <div class="flex items-center overflow-x-auto pb-1 md:pb-0 gap-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 custom-scrollbar">
+                    <button onclick="setFilterStatus('all')" id="tab-all" class="filter-tab active px-3.5 py-2 rounded-lg transition-all whitespace-nowrap">All Items</button>
+                    <button onclick="setFilterStatus('needs_wash')" id="tab-needs_wash" class="filter-tab px-3.5 py-2 rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span> Needs Wash
+                    </button>
+                    <button onclick="setFilterStatus('in_wash')" id="tab-in_wash" class="filter-tab px-3.5 py-2 rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> In Wash
+                    </button>
+                    <button onclick="setFilterStatus('alteration_needed')" id="tab-alteration_needed" class="filter-tab px-3.5 py-2 rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-purple-500"></span> Alteration
+                    </button>
+                    <button onclick="setFilterStatus('clean')" id="tab-clean" class="filter-tab px-3.5 py-2 rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Clean
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Filter Bar -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+                <span class="text-slate-400 font-medium mr-1">Category:</span>
+                
+                <div id="category-pills" class="flex flex-wrap gap-1.5">
+                    <!-- Dynamic category pills -->
+                </div>
+
+                <!-- Sort By Select -->
+                <div class="ml-auto flex items-center gap-2 mt-2 sm:mt-0">
+                    <span class="text-slate-400 font-medium hidden sm:inline">Sort:</span>
+                    <select id="sort-by" onchange="renderItems()" class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                        <option value="category">By Category</option>
+                        <option value="name">Name (A-Z)</option>
+                        <option value="cycles-desc">Most Wash Cycles</option>
+                        <option value="updated">Recently Updated</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Items Cards Grid / Empty State -->
+        <section id="clothing-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Dynamic clothing cards injected here via JS -->
+        </section>
+
+        <!-- Empty State Container -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-16 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+            <div class="w-16 h-16 bg-brand-50 dark:bg-brand-950/50 text-brand-500 rounded-full flex items-center justify-center text-2xl mb-4">
+                <i class="fa-solid fa-shirt"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">No clothing items found</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">Try adjusting your filters or search terms, or add new items to your wardrobe tracker.</p>
+            <button onclick="openAddModal()" class="mt-4 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold transition-all">
+                Add New Item
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Add / Edit Item Modal -->
+    <div id="item-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity opacity-0 duration-200">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-200 overflow-y-auto max-h-[90vh]" id="modal-content">
+            
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700/60">
+                <h2 id="modal-title" class="text-lg font-bold text-slate-900 dark:text-white">Add Clothing Item</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="item-form" onsubmit="handleFormSubmit(event)" class="mt-4 space-y-4">
+                <input type="hidden" id="item-id">
+
+                <!-- Item Name -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Item Name / Description *</label>
+                    <input type="text" id="input-name" required placeholder="e.g. Navy blue with 3 pockets" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-100">
+                </div>
+
+                <!-- Category & Status Row -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Category *</label>
+                        <select id="input-category" required class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-100">
+                            <option value="Shirts">Shirts</option>
+                            <option value="Polo">Polo</option>
+                            <option value="T-shirts">T-shirts</option>
+                            <option value="Sleeveless">Sleeveless</option>
+                            <option value="Shorts">Shorts</option>
+                            <option value="Pants">Pants</option>
+                            <option value="Punjabi">Punjabi</option>
+                            <option value="Jackets">Jackets</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Current Status</label>
+                        <select id="input-status" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-100">
+                            <option value="clean">Clean & Ready</option>
+                            <option value="needs_wash">Needs Wash</option>
+                            <option value="in_wash">In Wash / Laundry</option>
+                            <option value="alteration_needed">Alteration / Repair Needed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Wash Cycles & Care Instructions -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Wash Cycles</label>
+                        <input type="number" id="input-cycles" min="0" value="0" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-100">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Wash Method Note</label>
+                        <select id="input-care" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-100">
+                            <option value="Machine Washable">Machine Washable</option>
+                            <option value="Hand Wash / Gentle Cycle">Hand Wash / Gentle</option>
+                            <option value="Cold Wash Only">Cold Wash Only</option>
+                            <option value="Air Dry Only">Air Dry / Line Dry</option>
+                            <option value="Dry Clean Only">Dry Clean Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Special Notes / Alterations -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Special Notes / Alteration Needs</label>
+                    <textarea id="input-notes" rows="2" placeholder="e.g. needs waist adjustment, remove embroidery, extra gentle cycle" class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-100 placeholder-slate-400"></textarea>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-100 dark:border-slate-700/60">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-brand-600/20 transition-all">
+                        Save Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-xs font-medium">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600 text-base"></i>
+        <span id="toast-msg">Item updated successfully!</span>
+    </div>
+
+    <script>
+        // Initial Prepopulated User Inventory Data
+        const prepopulatedInventory = [
+            // Shirts
+            { id: 's1', name: 'Black Shirt with Red embroidery', category: 'Shirts', status: 'clean', cycles: 2, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 's2', name: 'Vintage red-blue stripes shirt', category: 'Shirts', status: 'clean', cycles: 5, care: 'Cold Wash Only', notes: '', updatedAt: new Date().toISOString() },
+            { id: 's3', name: 'Faded Pink-Orange Stripes with Two pockets', category: 'Shirts', status: 'needs_wash', cycles: 4, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 's4', name: 'Green-Brown lungi stripes cropped', category: 'Shirts', status: 'clean', cycles: 1, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 's5', name: 'Black w rounded collar 3/4 sleeves tie', category: 'Shirts', status: 'clean', cycles: 3, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 's6', name: 'Heavy XL grey superoversized workwear', category: 'Shirts', status: 'needs_wash', cycles: 7, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 's7', name: 'Black boxy shirt', category: 'Shirts', status: 'clean', cycles: 3, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 's8', name: 'Grey shirt with white outline', category: 'Shirts', status: 'alteration_needed', cycles: 0, care: 'Hand Wash / Gentle Cycle', notes: 'Need to remove embroidery or overwrite with BD flag', updatedAt: new Date().toISOString() },
+
+            // Polo
+            { id: 'p1', name: 'Blue-Red-Yellow Lacoste', category: 'Polo', status: 'clean', cycles: 6, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p2', name: 'Brown-Cream Lacoste', category: 'Polo', status: 'clean', cycles: 4, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p3', name: 'Textured white cropped', category: 'Polo', status: 'needs_wash', cycles: 2, care: 'Cold Wash Only', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p4', name: 'Navy blue 3/4 sleeve', category: 'Polo', status: 'clean', cycles: 5, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p5', name: 'Red-Pink stripes 3/4 sleeves', category: 'Polo', status: 'clean', cycles: 3, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p6', name: 'Brown-black stripes w/o collar', category: 'Polo', status: 'clean', cycles: 2, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p7', name: 'Textured white w/o collar', category: 'Polo', status: 'needs_wash', cycles: 1, care: 'Cold Wash Only', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p8', name: 'Red cropped awks', category: 'Polo', status: 'clean', cycles: 2, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p9', name: 'Aarong fotua white w embroidery', category: 'Polo', status: 'clean', cycles: 3, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p10', name: 'Aarong fotua black w white stripes and textures', category: 'Polo', status: 'clean', cycles: 3, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p11', name: 'Maroon full', category: 'Polo', status: 'clean', cycles: 1, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p12', name: 'Shiny greenish Blue full', category: 'Polo', status: 'clean', cycles: 2, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p13', name: 'Navy blue with 3 pockets', category: 'Polo', status: 'clean', cycles: 4, care: 'Machine Washable', notes: '1 special extra vivid sideways pocket', updatedAt: new Date().toISOString() },
+            { id: 'p14', name: 'Dotted Black half', category: 'Polo', status: 'in_wash', cycles: 5, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p15', name: 'Fortune white', category: 'Polo', status: 'clean', cycles: 2, care: 'Cold Wash Only', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p16', name: 'Brown Chinese shirt from J0N4K1', category: 'Polo', status: 'clean', cycles: 1, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p17', name: 'Grey chinese thrift', category: 'Polo', status: 'clean', cycles: 3, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'p18', name: 'Keep hush Fotua', category: 'Polo', status: 'clean', cycles: 2, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+
+            // T-shirts
+            { id: 't1', name: 'Pink Floyd', category: 'T-shirts', status: 'needs_wash', cycles: 8, care: 'Machine Washable', notes: 'Band graphic tee', updatedAt: new Date().toISOString() },
+            { id: 't2', name: 'Grey no brand', category: 'T-shirts', status: 'clean', cycles: 12, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 't3', name: 'Grey reversible with stripes at collar inner', category: 'T-shirts', status: 'clean', cycles: 6, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 't4', name: 'Grey Zara', category: 'T-shirts', status: 'clean', cycles: 9, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 't5', name: 'Greyish Blue Zara', category: 'T-shirts', status: 'clean', cycles: 7, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 't6', name: 'Vivid blue waffle', category: 'T-shirts', status: 'needs_wash', cycles: 4, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+
+            // Sleeveless
+            { id: 'sl1', name: 'No bad day', category: 'Sleeveless', status: 'clean', cycles: 5, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sl2', name: 'Lighter than navy Blue', category: 'Sleeveless', status: 'clean', cycles: 3, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sl3', name: 'Navy blue', category: 'Sleeveless', status: 'needs_wash', cycles: 6, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sl4', name: 'Black tight', category: 'Sleeveless', status: 'clean', cycles: 10, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+
+            // Shorts
+            { id: 'sh1', name: 'Black w pockets', category: 'Shorts', status: 'clean', cycles: 11, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sh2', name: 'Navy blue w/o pockets', category: 'Shorts', status: 'clean', cycles: 8, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sh3', name: 'Navy blue', category: 'Shorts', status: 'needs_wash', cycles: 7, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sh4', name: 'Vivid blue w Nike', category: 'Shorts', status: 'clean', cycles: 14, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sh5', name: 'Brown w Pockets', category: 'Shorts', status: 'clean', cycles: 5, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'sh6', name: 'Green cargo w pockets', category: 'Shorts', status: 'clean', cycles: 6, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+
+            // Pants
+            { id: 'pt1', name: 'Khut black w patchwork', category: 'Pants', status: 'clean', cycles: 4, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pt2', name: 'Shomoy grey w red stitch', category: 'Pants', status: 'clean', cycles: 3, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pt3', name: 'Textured green mossy full', category: 'Pants', status: 'clean', cycles: 2, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pt4', name: 'Navy blue full', category: 'Pants', status: 'clean', cycles: 8, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pt5', name: 'Full but cropped vivid blue', category: 'Pants', status: 'alteration_needed', cycles: 1, care: 'Machine Washable', notes: 'Needs waist adjustment', updatedAt: new Date().toISOString() },
+            { id: 'pt6', name: 'Brown wrangler', category: 'Pants', status: 'alteration_needed', cycles: 2, care: 'Machine Washable', notes: 'Needs waist adjustment', updatedAt: new Date().toISOString() },
+            { id: 'pt7', name: 'Pale green cargo full', category: 'Pants', status: 'alteration_needed', cycles: 0, care: 'Machine Washable', notes: 'Needs waist and height adjustment', updatedAt: new Date().toISOString() },
+            { id: 'pt8', name: 'Dotted blue full', category: 'Pants', status: 'clean', cycles: 4, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pt9', name: 'Japanese navy blue wide formal', category: 'Pants', status: 'clean', cycles: 3, care: 'Dry Clean Only', notes: '', updatedAt: new Date().toISOString() },
+
+            // Punjabi
+            { id: 'pj1', name: 'Blue with leaves textures', category: 'Punjabi', status: 'clean', cycles: 2, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pj2', name: 'Purple with shadows', category: 'Punjabi', status: 'clean', cycles: 1, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pj3', name: 'Black with red yellow stripes', category: 'Punjabi', status: 'needs_wash', cycles: 3, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'pj4', name: 'White with embroidery', category: 'Punjabi', status: 'clean', cycles: 2, care: 'Hand Wash / Gentle Cycle', notes: 'Gentle handling', updatedAt: new Date().toISOString() },
+
+            // Jackets
+            { id: 'jk1', name: 'Dark blue wind breaker with white line', category: 'Jackets', status: 'clean', cycles: 1, care: 'Cold Wash Only', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'jk2', name: 'Grey full body', category: 'Jackets', status: 'clean', cycles: 2, care: 'Air Dry Only', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'jk3', name: 'Dark Brown hoodie', category: 'Jackets', status: 'needs_wash', cycles: 4, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'jk4', name: 'Fishtale Hoodie', category: 'Jackets', status: 'clean', cycles: 3, care: 'Machine Washable', notes: '', updatedAt: new Date().toISOString() },
+            { id: 'jk5', name: 'Fishtale mask', category: 'Jackets', status: 'clean', cycles: 5, care: 'Hand Wash / Gentle Cycle', notes: '', updatedAt: new Date().toISOString() }
+        ];
+
+        const allCategories = ['All', 'Shirts', 'Polo', 'T-shirts', 'Sleeveless', 'Shorts', 'Pants', 'Punjabi', 'Jackets'];
+
+        // State variables
+        let clothingItems = [];
+        let currentFilterStatus = 'all';
+        let currentSelectedCategory = 'All';
+
+        function initApp() {
+            const saved = localStorage.getItem('freshfold_wardrobe_items');
+            if (saved) {
+                try {
+                    clothingItems = JSON.parse(saved);
+                } catch(e) {
+                    clothingItems = prepopulatedInventory;
+                }
+            } else {
+                clothingItems = prepopulatedInventory;
+                saveItems();
+            }
+
+            // Theme detection
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            renderCategoryPills();
+            renderItems();
+            updateStats();
+        }
+
+        function saveItems() {
+            localStorage.setItem('freshfold_wardrobe_items', JSON.stringify(clothingItems));
+            updateStats();
+        }
+
+        function resetToDefaultData() {
+            if (confirm('Reset your inventory back to the default prepopulated 48 items?')) {
+                clothingItems = prepopulatedInventory;
+                saveItems();
+                renderItems();
+                showToast('Inventory reset to initial wardrobe list!');
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+        }
+
+        function setFilterStatus(status) {
+            currentFilterStatus = status;
+            
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('bg-white', 'dark:bg-slate-800', 'shadow-sm', 'text-brand-600', 'dark:text-brand-400');
+            });
+
+            const activeBtn = document.getElementById(`tab-${status}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-white', 'dark:bg-slate-800', 'shadow-sm', 'text-brand-600', 'dark:text-brand-400');
+            }
+
+            renderItems();
+        }
+
+        function setFilterCategory(cat) {
+            currentSelectedCategory = cat;
+            renderCategoryPills();
+            renderItems();
+        }
+
+        function renderCategoryPills() {
+            const container = document.getElementById('category-pills');
+            container.innerHTML = allCategories.map(cat => {
+                const isActive = currentSelectedCategory === cat;
+                const activeClass = isActive 
+                    ? 'bg-brand-600 text-white font-semibold shadow-sm' 
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/60 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium';
+                
+                return `<button onclick="setFilterCategory('${cat}')" class="px-2.5 py-1 rounded-lg text-xs transition-all ${activeClass}">${cat}</button>`;
+            }).join('');
+        }
+
+        function updateStats() {
+            const total = clothingItems.length;
+            const needsWash = clothingItems.filter(i => i.status === 'needs_wash').length;
+            const inWash = clothingItems.filter(i => i.status === 'in_wash').length;
+            const alteration = clothingItems.filter(i => i.status === 'alteration_needed').length;
+            const clean = clothingItems.filter(i => i.status === 'clean').length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-needs-wash').innerText = needsWash;
+            document.getElementById('stat-in-wash').innerText = inWash;
+            document.getElementById('stat-alteration').innerText = alteration;
+            document.getElementById('stat-clean').innerText = clean;
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('clothing-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            const sortBy = document.getElementById('sort-by').value;
+
+            // Filter logic
+            let filtered = clothingItems.filter(item => {
+                if (currentFilterStatus !== 'all' && item.status !== currentFilterStatus) return false;
+                if (currentSelectedCategory !== 'All' && item.category !== currentSelectedCategory) return false;
+
+                if (searchQuery) {
+                    const matchName = item.name.toLowerCase().includes(searchQuery);
+                    const matchCategory = item.category.toLowerCase().includes(searchQuery);
+                    const matchCare = (item.care || '').toLowerCase().includes(searchQuery);
+                    const matchNotes = (item.notes || '').toLowerCase().includes(searchQuery);
+                    if (!matchName && !matchCategory && !matchCare && !matchNotes) return false;
+                }
+
+                return true;
+            });
+
+            // Sorting logic
+            filtered.sort((a, b) => {
+                if (sortBy === 'cycles-desc') return b.cycles - a.cycles;
+                if (sortBy === 'name') return a.name.localeCompare(b.name);
+                if (sortBy === 'category') return a.category.localeCompare(b.category);
+                return new Date(b.updatedAt) - new Date(a.updatedAt);
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            grid.innerHTML = filtered.map(item => {
+                let statusBadge = '';
+                if (item.status === 'needs_wash') {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Needs Wash
+                    </span>`;
+                } else if (item.status === 'in_wash') {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span> In Wash
+                    </span>`;
+                } else if (item.status === 'alteration_needed') {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Alteration
+                    </span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Clean & Ready
+                    </span>`;
+                }
+
+                return `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border ${item.notes ? 'border-purple-200 dark:border-purple-900/40' : 'border-slate-200/80 dark:border-slate-700/80'} p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            ${statusBadge}
+                            
+                            <div class="flex items-center space-x-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                                <button onclick="openEditModal('${item.id}')" title="Edit Item" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteItem('${item.id}')" title="Delete Item" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 class="font-bold text-slate-900 dark:text-white text-sm leading-snug">${escapeHtml(item.name)}</h3>
+                        
+                        <div class="flex flex-wrap items-center gap-1.5 mt-2.5">
+                            <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-semibold">
+                                <i class="fa-solid fa-tag text-[9px] mr-1 opacity-70"></i>${item.category}
+                            </span>
+                            <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-medium">
+                                <i class="fa-solid fa-droplet text-[9px] mr-1 opacity-70"></i>${item.care || 'Gentle'}
+                            </span>
+                        </div>
+
+                        ${item.notes ? `
+                            <p class="mt-2.5 text-xs text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 p-2 rounded-xl italic font-medium border border-purple-100 dark:border-purple-900/30">
+                                <i class="fa-solid fa-scissors text-[10px] mr-1 text-purple-500"></i>${escapeHtml(item.notes)}
+                            </p>
+                        ` : ''}
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <div class="flex items-center space-x-1.5" title="Total wash cycles logged">
+                            <i class="fa-solid fa-arrows-rotate text-xs text-slate-400"></i>
+                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">${item.cycles} <span class="text-[10px] text-slate-400 font-normal">washes</span></span>
+                        </div>
+
+                        <div class="flex items-center space-x-1">
+                            ${item.status === 'needs_wash' ? `
+                                <button onclick="updateStatus('${item.id}', 'in_wash')" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1">
+                                    <i class="fa-solid fa-soap text-[10px]"></i> Wash
+                                </button>
+                            ` : item.status === 'in_wash' ? `
+                                <button onclick="updateStatus('${item.id}', 'clean', true)" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1">
+                                    <i class="fa-solid fa-check text-[10px]"></i> Done
+                                </button>
+                            ` : item.status === 'alteration_needed' ? `
+                                <button onclick="updateStatus('${item.id}', 'clean')" class="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1">
+                                    <i class="fa-solid fa-check text-[10px]"></i> Fixed
+                                </button>
+                            ` : `
+                                <button onclick="updateStatus('${item.id}', 'needs_wash')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium transition-all flex items-center gap-1">
+                                    <i class="fa-solid fa-basket-shopping text-[10px]"></i> Dirty
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function updateStatus(id, newStatus, incrementCycle = false) {
+            const index = clothingItems.findIndex(i => i.id === id);
+            if (index !== -1) {
+                clothingItems[index].status = newStatus;
+                clothingItems[index].updatedAt = new Date().toISOString();
+                
+                if (incrementCycle) {
+                    clothingItems[index].cycles = (clothingItems[index].cycles || 0) + 1;
+                    showToast(`Washed! Cycle count updated to ${clothingItems[index].cycles}`);
+                } else {
+                    showToast(`Status changed to ${newStatus.replace('_', ' ')}`);
+                }
+
+                saveItems();
+                renderItems();
+            }
+        }
+
+        function deleteItem(id) {
+            const item = clothingItems.find(i => i.id === id);
+            if (!item) return;
+
+            if (confirm(`Delete "${item.name}"?`)) {
+                clothingItems = clothingItems.filter(i => i.id !== id);
+                saveItems();
+                renderItems();
+                showToast('Item deleted');
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').innerText = 'Add Clothing Item';
+            document.getElementById('item-id').value = '';
+            document.getElementById('item-form').reset();
+            
+            const modal = document.getElementById('item-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function openEditModal(id) {
+            const item = clothingItems.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-title').innerText = 'Edit Clothing Item';
+            document.getElementById('item-id').value = item.id;
+            document.getElementById('input-name').value = item.name;
+            document.getElementById('input-category').value = item.category;
+            document.getElementById('input-status').value = item.status;
+            document.getElementById('input-cycles').value = item.cycles || 0;
+            document.getElementById('input-care').value = item.care || 'Machine Washable';
+            document.getElementById('input-notes').value = item.notes || '';
+
+            const modal = document.getElementById('item-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('item-modal');
+            modal.classList.add('opacity-0');
+            document.getElementById('modal-content').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('item-id').value;
+            const name = document.getElementById('input-name').value;
+            const category = document.getElementById('input-category').value;
+            const status = document.getElementById('input-status').value;
+            const cycles = parseInt(document.getElementById('input-cycles').value) || 0;
+            const care = document.getElementById('input-care').value;
+            const notes = document.getElementById('input-notes').value;
+
+            if (id) {
+                const index = clothingItems.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    clothingItems[index] = {
+                        ...clothingItems[index],
+                        name, category, status, cycles, care, notes,
+                        updatedAt: new Date().toISOString()
+                    };
+                    showToast('Item updated successfully!');
+                }
+            } else {
+                const newItem = {
+                    id: 'custom_' + Date.now(),
+                    name, category, status, cycles, care, notes,
+                    updatedAt: new Date().toISOString()
+                };
+                clothingItems.unshift(newItem);
+                showToast('New clothing added to inventory!');
+            }
+
+            saveItems();
+            renderItems();
+            closeModal();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
